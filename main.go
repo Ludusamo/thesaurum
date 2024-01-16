@@ -32,9 +32,14 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	topic := p.ByName("topic")
 	b, _ := io.ReadAll(r.Body)
-	StoreChain(store, topic, string(b))
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "success")
+	stored := StoreChain(store, topic, string(b))
+	if stored {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "success")
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "failed to persist to all caches")
+	}
 }
 
 func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

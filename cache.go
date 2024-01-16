@@ -6,20 +6,21 @@ import (
 )
 
 type Store interface {
-	Store(topic string, data string)
+	Store(topic string, data string) bool
 	Retrieve(topic string) (string, bool)
-	Delete(topic string)
+	Delete(topic string) bool
 	List() []string
 
 	HasNext() bool
 	Next() Store
 }
 
-func StoreChain(s Store, topic string, data string) {
-	s.Store(topic, data)
+func StoreChain(s Store, topic string, data string) bool {
+	succeeded := s.Store(topic, data)
 	if s.HasNext() {
-		StoreChain(s.Next(), topic, data)
+		return succeeded && StoreChain(s.Next(), topic, data)
 	}
+	return succeeded
 }
 
 func RetrieveChain(s Store, topic string) (string, bool) {
@@ -33,11 +34,12 @@ func RetrieveChain(s Store, topic string) (string, bool) {
 	return data, found
 }
 
-func DeleteChain(s Store, topic string) {
-	s.Delete(topic)
+func DeleteChain(s Store, topic string) bool {
+	succeeded := s.Delete(topic)
 	if s.HasNext() {
-		DeleteChain(s.Next(), topic)
+		return succeeded && DeleteChain(s.Next(), topic)
 	}
+	return succeeded
 }
 
 type InMemoryStore struct {
@@ -52,9 +54,10 @@ func NewInMemoryStore(nextStore Store) *InMemoryStore {
 	return &s
 }
 
-func (s *InMemoryStore) Store(topic string, data string) {
+func (s *InMemoryStore) Store(topic string, data string) bool {
 	fmt.Println("Storing in memory")
 	s.data[topic] = data
+	return true
 }
 
 func (s *InMemoryStore) Retrieve(topic string) (string, bool) {
@@ -63,8 +66,9 @@ func (s *InMemoryStore) Retrieve(topic string) (string, bool) {
 	return data, found
 }
 
-func (s *InMemoryStore) Delete(topic string) {
+func (s *InMemoryStore) Delete(topic string) bool {
 	delete(s.data, topic)
+	return true
 }
 
 func (s *InMemoryStore) List() []string {
@@ -101,13 +105,15 @@ func NewFileStore(path string, nextStore Store) *FileStore {
 	return &s
 }
 
-func (s *FileStore) Store(topic string, data string) {
+func (s *FileStore) Store(topic string, data string) bool {
 	fmt.Println("Storing in file")
 	fout, err := os.Create(s.getTopicPath(topic))
 	if err == nil {
 		defer fout.Close()
 		fout.WriteString(data)
+		return true
 	}
+	return false
 }
 
 func (s *FileStore) Retrieve(topic string) (string, bool) {
@@ -119,8 +125,9 @@ func (s *FileStore) Retrieve(topic string) (string, bool) {
 	return string(data), true
 }
 
-func (s *FileStore) Delete(topic string) {
-	os.Remove(s.getTopicPath(topic))
+func (s *FileStore) Delete(topic string) bool {
+	err := os.Remove(s.getTopicPath(topic))
+	return err == nil
 }
 
 func (s *FileStore) List() []string {

@@ -42,6 +42,14 @@ func DeleteChain(s Store, topic string) bool {
 	return succeeded
 }
 
+func ListChain(s Store) [][]string {
+	lst := [][]string{s.List()}
+	if s.HasNext() {
+		lst = append(lst, ListChain(s.Next())...)
+	}
+	return lst
+}
+
 type InMemoryStore struct {
 	data      map[string]string
 	nextStore Store

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +17,7 @@ var store Store
 func main() {
 	router := httprouter.New()
 	router.GET("/", Index)
+	router.GET("/topic/", HandleList)
 	router.GET("/topic/:topic", HandleGet)
 	router.POST("/topic/:topic", HandlePost)
 
@@ -52,4 +54,11 @@ func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "could not find data for topic")
 	}
+}
+
+func HandleList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	topics := ListChain(store)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(topics)
 }

@@ -7,12 +7,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"thesaurum/cache"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 var DataFilepath string
-var store Store
+var store cache.Store
 
 func main() {
 	router := httprouter.New()
@@ -22,7 +23,7 @@ func main() {
 	router.POST("/topic/:topic", HandlePost)
 
 	DataFilepath = os.Getenv("DATA_FILEPATH")
-	store = NewInMemoryStore(NewFileStore(DataFilepath, nil))
+	store = cache.NewInMemoryStore(cache.NewFileStore(DataFilepath, nil))
 
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
@@ -34,8 +35,8 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	topic := p.ByName("topic")
 	b, _ := io.ReadAll(r.Body)
-	data := Data{Metadata{len(b), r.Header.Get("Content-Type")}, b}
-	stored := StoreChain(store, topic, &data)
+	data := cache.Data{cache.Metadata{len(b), r.Header.Get("Content-Type")}, b}
+	stored := cache.StoreChain(store, topic, &data)
 	if stored {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "success")
@@ -47,7 +48,7 @@ func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	topic := p.ByName("topic")
-	data, found := RetrieveChain(store, topic)
+	data, found := cache.RetrieveChain(store, topic)
 	if found {
 		w.Header().Set("Content-Type", data.Meta.Datatype)
 		w.WriteHeader(http.StatusOK)
@@ -59,7 +60,7 @@ func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 }
 
 func HandleList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	topics := ListChain(store)
+	topics := cache.ListChain(store)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(topics)

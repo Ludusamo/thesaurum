@@ -25,7 +25,7 @@ func main() {
 	dataPath := os.Getenv("DATA_FILEPATH")
 	maxCache, err := strconv.Atoi(os.Getenv("MAX_MEMORY_CACHE"))
 	if err != nil {
-		log.Fatal("MAX_MEMORY_CACHE was unable to be read", err)
+		log.Fatal("error parsing MAX_MEMORY_CACHE: ", err)
 	}
 	store = cache.NewInMemoryStore(cache.NewFileStore(dataPath, nil), maxCache)
 

@@ -1,6 +1,9 @@
 package cache
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 type lruNode struct {
 	next  *lruNode
@@ -12,6 +15,7 @@ type lruTracker struct {
 	head   *lruNode
 	tail   *lruNode
 	lookup map[string]*lruNode
+	lock   *sync.Mutex
 }
 
 func (n *lruNode) print() {
@@ -59,6 +63,7 @@ func newLruTracker() *lruTracker {
 	tracker.head = nil
 	tracker.tail = nil
 	tracker.lookup = make(map[string]*lruNode)
+	tracker.lock = new(sync.Mutex)
 	return &tracker
 }
 
@@ -90,6 +95,8 @@ func (tracker *lruTracker) remove(topic string) *lruNode {
 }
 
 func (tracker *lruTracker) use(topic string) {
+	tracker.lock.Lock()
+	defer tracker.lock.Unlock()
 	node, found := tracker.lookup[topic]
 	if !found {
 		node = newLruNode(topic)
@@ -113,6 +120,8 @@ func (tracker *lruTracker) use(topic string) {
 }
 
 func (tracker *lruTracker) pop() *lruNode {
+	tracker.lock.Lock()
+	defer tracker.lock.Unlock()
 	fmt.Println("popping least recently used")
 	tracker.print()
 	if tracker.tail != nil {
@@ -126,6 +135,8 @@ func (tracker *lruTracker) pop() *lruNode {
 }
 
 func (tracker *lruTracker) delete(topic string) {
+	tracker.lock.Lock()
+	defer tracker.lock.Unlock()
 	n := tracker.remove(topic)
 	if n != nil {
 		delete(tracker.lookup, n.topic)

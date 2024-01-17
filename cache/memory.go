@@ -10,12 +10,12 @@ type InMemoryStore struct {
 	tracker    *lruTracker
 }
 
-func NewInMemoryStore(nextStore Store) *InMemoryStore {
+func NewInMemoryStore(nextStore Store, maxCached int) *InMemoryStore {
 	var s InMemoryStore
 	s.data = make(map[string]*Data)
 	s.nextStore = nextStore
 	s.sizeCached = 0
-	s.maxCached = 64
+	s.maxCached = maxCached
 	s.tracker = newLruTracker()
 	return &s
 }

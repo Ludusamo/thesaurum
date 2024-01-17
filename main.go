@@ -7,12 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"thesaurum/cache"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-var DataFilepath string
 var store cache.Store
 
 func main() {
@@ -22,8 +22,12 @@ func main() {
 	router.GET("/topic/:topic", HandleGet)
 	router.POST("/topic/:topic", HandlePost)
 
-	DataFilepath = os.Getenv("DATA_FILEPATH")
-	store = cache.NewInMemoryStore(cache.NewFileStore(DataFilepath, nil))
+	dataPath := os.Getenv("DATA_FILEPATH")
+	maxCache, err := strconv.Atoi(os.Getenv("MAX_MEMORY_CACHE"))
+	if err != nil {
+		log.Fatal("MAX_MEMORY_CACHE was unable to be read", err)
+	}
+	store = cache.NewInMemoryStore(cache.NewFileStore(dataPath, nil), maxCache)
 
 	log.Fatal(http.ListenAndServe(":5000", router))
 }

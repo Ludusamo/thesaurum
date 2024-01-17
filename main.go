@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"thesaurum/cache"
 
 	"github.com/julienschmidt/httprouter"
@@ -15,19 +16,33 @@ import (
 
 var chainCache cache.Cache
 
+func getEnv(env string, def string) string {
+	if v, ok := os.LookupEnv(env); ok {
+		return v
+	}
+	return def
+}
+
 func main() {
+	cacheLayers := strings.Split(getEnv("CACHE_LAYERS", "InMemory,File"), ",")
+	for _, layer := range cacheLayers {
+		if layer == "InMemory" {
+			maxCache, err := strconv.Atoi(getEnv("MAX_MEMORY_CACHE", "1048576"))
+			if err != nil {
+				log.Fatal("error parsing MAX_MEMORY_CACHE: ", err)
+			}
+			chainCache.Add(cache.NewInMemoryStore(maxCache))
+		} else if layer == "File" {
+			dataPath := getEnv("DATA_FILEPATH", "data")
+			chainCache.Add(cache.NewFileStore(dataPath))
+		}
+	}
+
 	router := httprouter.New()
 	router.GET("/", Index)
 	router.GET("/topic/", HandleList)
 	router.GET("/topic/:topic", HandleGet)
 	router.POST("/topic/:topic", HandlePost)
-
-	dataPath := os.Getenv("DATA_FILEPATH")
-	maxCache, err := strconv.Atoi(os.Getenv("MAX_MEMORY_CACHE"))
-	if err != nil {
-		log.Fatal("error parsing MAX_MEMORY_CACHE: ", err)
-	}
-	chainCache.Add(cache.NewInMemoryStore(maxCache)).Add(cache.NewFileStore(dataPath))
 
 	log.Fatal(http.ListenAndServe(":5000", router))
 }

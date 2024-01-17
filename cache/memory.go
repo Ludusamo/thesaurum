@@ -4,16 +4,14 @@ import "fmt"
 
 type InMemoryStore struct {
 	data       map[string]*Data
-	nextStore  Store
 	sizeCached int
 	maxCached  int
 	tracker    *lruTracker
 }
 
-func NewInMemoryStore(nextStore Store, maxCached int) *InMemoryStore {
+func NewInMemoryStore(maxCached int) *InMemoryStore {
 	var s InMemoryStore
 	s.data = make(map[string]*Data)
-	s.nextStore = nextStore
 	s.sizeCached = 0
 	s.maxCached = maxCached
 	s.tracker = newLruTracker()
@@ -61,12 +59,4 @@ func (s *InMemoryStore) List() []string {
 		i++
 	}
 	return topics
-}
-
-func (s *InMemoryStore) Next() Store {
-	return s.nextStore
-}
-
-func (s *InMemoryStore) HasNext() bool {
-	return s.nextStore != nil
 }

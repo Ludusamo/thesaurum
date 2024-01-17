@@ -15,42 +15,50 @@ type Store interface {
 	Retrieve(topic string) (*Data, bool)
 	Delete(topic string) bool
 	List() []string
-
-	HasNext() bool
-	Next() Store
 }
 
-func StoreChain(s Store, topic string, data *Data) bool {
-	succeeded := s.Store(topic, data)
-	if s.HasNext() {
-		return succeeded && StoreChain(s.Next(), topic, data)
+type Cache struct {
+	layers []Store
+}
+
+func (cache *Cache) Add(store Store) *Cache {
+	cache.layers = append(cache.layers, store)
+	return cache
+}
+
+func (cache *Cache) Store(topic string, data *Data) bool {
+	succeeded := true
+	for _, store := range cache.layers {
+		succeeded = succeeded && store.Store(topic, data)
 	}
 	return succeeded
 }
 
-func RetrieveChain(s Store, topic string) (*Data, bool) {
-	data, found := s.Retrieve(topic)
-	if !found && s.HasNext() {
-		data, found = RetrieveChain(s.Next(), topic)
+func (cache *Cache) Retrieve(topic string) (*Data, bool) {
+	for layer, store := range cache.layers {
+		data, found := store.Retrieve(topic)
 		if found {
-			s.Store(topic, data)
+			for i := 0; i < layer; i++ {
+				cache.layers[i].Store(topic, data)
+			}
+			return data, found
 		}
 	}
-	return data, found
+	return nil, false
 }
 
-func DeleteChain(s Store, topic string) bool {
-	succeeded := s.Delete(topic)
-	if s.HasNext() {
-		return succeeded && DeleteChain(s.Next(), topic)
+func (cache *Cache) Delete(topic string) bool {
+	succeeded := true
+	for _, store := range cache.layers {
+		succeeded = succeeded && store.Delete(topic)
 	}
 	return succeeded
 }
 
-func ListChain(s Store) [][]string {
-	lst := [][]string{s.List()}
-	if s.HasNext() {
-		lst = append(lst, ListChain(s.Next())...)
+func (cache *Cache) List() [][]string {
+	var lst [][]string
+	for _, store := range cache.layers {
+		lst = append(lst, store.List())
 	}
 	return lst
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-var store cache.Store
+var chainCache cache.Cache
 
 func main() {
 	router := httprouter.New()
@@ -27,7 +27,7 @@ func main() {
 	if err != nil {
 		log.Fatal("error parsing MAX_MEMORY_CACHE: ", err)
 	}
-	store = cache.NewInMemoryStore(cache.NewFileStore(dataPath, nil), maxCache)
+	chainCache.Add(cache.NewInMemoryStore(maxCache)).Add(cache.NewFileStore(dataPath))
 
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
@@ -40,7 +40,7 @@ func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	topic := p.ByName("topic")
 	b, _ := io.ReadAll(r.Body)
 	data := cache.Data{cache.Metadata{len(b), r.Header.Get("Content-Type")}, b}
-	stored := cache.StoreChain(store, topic, &data)
+	stored := chainCache.Store(topic, &data)
 	if stored {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "success")
@@ -52,7 +52,7 @@ func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	topic := p.ByName("topic")
-	data, found := cache.RetrieveChain(store, topic)
+	data, found := chainCache.Retrieve(topic)
 	if found {
 		w.Header().Set("Content-Type", data.Meta.Datatype)
 		w.WriteHeader(http.StatusOK)
@@ -64,7 +64,7 @@ func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 }
 
 func HandleList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	topics := cache.ListChain(store)
+	topics := chainCache.List()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(topics)

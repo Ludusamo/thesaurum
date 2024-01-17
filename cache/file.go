@@ -8,18 +8,16 @@ import (
 )
 
 type FileStore struct {
-	path      string
-	nextStore Store
+	path string
 }
 
 func (s *FileStore) getTopicPath(topic string) string {
 	return fmt.Sprintf("%s/%s", s.path, topic)
 }
 
-func NewFileStore(path string, nextStore Store) *FileStore {
+func NewFileStore(path string) *FileStore {
 	var s FileStore
 	s.path = path
-	s.nextStore = nextStore
 	return &s
 }
 
@@ -86,12 +84,4 @@ func (s *FileStore) List() []string {
 		i++
 	}
 	return topics
-}
-
-func (s *FileStore) Next() Store {
-	return s.nextStore
-}
-
-func (s *FileStore) HasNext() bool {
-	return s.nextStore != nil
 }

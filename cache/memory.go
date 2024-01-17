@@ -38,6 +38,10 @@ func (s *InMemoryStore) get(topic string) (*Data, bool) {
 
 func (s *InMemoryStore) Store(topic string, data *Data) bool {
 	fmt.Println("storing in memory")
+	if data.Meta.Size > s.maxCached {
+		// Skip caching since we would just wipe and still not be able to fit it
+		return true
+	}
 	s.put(topic, data)
 	s.sizeCached += data.Meta.Size
 	for s.sizeCached > s.maxCached {

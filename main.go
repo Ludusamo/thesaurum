@@ -34,7 +34,8 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	topic := p.ByName("topic")
 	b, _ := io.ReadAll(r.Body)
-	stored := StoreChain(store, topic, string(b))
+	data := Data{Metadata{len(b), r.Header.Get("Content-Type")}, b}
+	stored := StoreChain(store, topic, &data)
 	if stored {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "success")
@@ -48,8 +49,9 @@ func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	topic := p.ByName("topic")
 	data, found := RetrieveChain(store, topic)
 	if found {
+		w.Header().Set("Content-Type", data.Meta.Datatype)
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, data)
+		w.Write(data.Data)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "could not find data for topic")

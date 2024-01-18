@@ -31,10 +31,10 @@ func main() {
 			if err != nil {
 				log.Fatal("error parsing MAX_MEMORY_CACHE: ", err)
 			}
-			chainCache.Add(cache.NewInMemoryStore(maxCache))
+			chainCache.Add(cache.NewInMemoryCache(maxCache))
 		} else if layer == "File" {
 			dataPath := getEnv("DATA_FILEPATH", "data")
-			chainCache.Add(cache.NewFileStore(dataPath))
+			chainCache.Add(cache.NewFileCache(dataPath))
 		}
 	}
 

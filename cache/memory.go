@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type InMemoryStore struct {
+type InMemoryCache struct {
 	data       map[string]*Data
 	sizeCached int
 	maxCached  int
@@ -13,8 +13,8 @@ type InMemoryStore struct {
 	lock       *sync.RWMutex
 }
 
-func NewInMemoryStore(maxCached int) *InMemoryStore {
-	var s InMemoryStore
+func NewInMemoryCache(maxCached int) *InMemoryCache {
+	var s InMemoryCache
 	s.data = make(map[string]*Data)
 	s.sizeCached = 0
 	s.maxCached = maxCached
@@ -23,20 +23,20 @@ func NewInMemoryStore(maxCached int) *InMemoryStore {
 	return &s
 }
 
-func (s *InMemoryStore) put(topic string, data *Data) {
+func (s *InMemoryCache) put(topic string, data *Data) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.data[topic] = data
 }
 
-func (s *InMemoryStore) get(topic string) (*Data, bool) {
+func (s *InMemoryCache) get(topic string) (*Data, bool) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	d, found := s.data[topic]
 	return d, found
 }
 
-func (s *InMemoryStore) Store(topic string, data *Data) error {
+func (s *InMemoryCache) Store(topic string, data *Data) error {
 	log.Println("storing in memory")
 	if data.Meta.Size > s.maxCached {
 		// Skip caching since we would just wipe and still not be able to fit it
@@ -57,7 +57,7 @@ func (s *InMemoryStore) Store(topic string, data *Data) error {
 	return nil
 }
 
-func (s *InMemoryStore) Retrieve(topic string) (*Data, bool) {
+func (s *InMemoryCache) Retrieve(topic string) (*Data, bool) {
 	log.Println("retrieving in memory")
 	data, found := s.get(topic)
 	if found {
@@ -66,7 +66,7 @@ func (s *InMemoryStore) Retrieve(topic string) (*Data, bool) {
 	return data, found
 }
 
-func (s *InMemoryStore) Delete(topic string) error {
+func (s *InMemoryCache) Delete(topic string) error {
 	data, found := s.get(topic)
 	if found {
 		s.sizeCached -= data.Meta.Size
@@ -78,7 +78,7 @@ func (s *InMemoryStore) Delete(topic string) error {
 	return nil
 }
 
-func (s *InMemoryStore) List() []string {
+func (s *InMemoryCache) List() []string {
 	topics := make([]string, len(s.data))
 	i := 0
 	s.lock.RLock()

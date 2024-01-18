@@ -12,7 +12,7 @@ type Data struct {
 	Data []byte
 }
 
-type Store interface {
+type CacheLayer interface {
 	Store(topic string, data *Data) error
 	Retrieve(topic string) (*Data, bool)
 	Delete(topic string) error
@@ -20,10 +20,10 @@ type Store interface {
 }
 
 type Cache struct {
-	layers []Store
+	layers []CacheLayer
 }
 
-func (cache *Cache) Add(store Store) *Cache {
+func (cache *Cache) Add(store CacheLayer) *Cache {
 	cache.layers = append(cache.layers, store)
 	return cache
 }

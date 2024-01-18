@@ -141,4 +141,5 @@ func (tracker *lruTracker) delete(topic string) {
 	if n != nil {
 		delete(tracker.lookup, n.topic)
 	}
+	tracker.print()
 }

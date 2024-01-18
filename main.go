@@ -43,12 +43,25 @@ func main() {
 	router.GET("/topic/", HandleList)
 	router.GET("/topic/:topic", HandleGet)
 	router.POST("/topic/:topic", HandlePost)
+	router.DELETE("/topic/:topic", HandleDelete)
 
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "Home")
+}
+
+func HandleDelete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	topic := p.ByName("topic")
+	err := chainCache.Delete(topic)
+	if err == nil {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "success")
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+	}
 }
 
 func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

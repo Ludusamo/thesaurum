@@ -71,6 +71,7 @@ func (s *InMemoryStore) Delete(topic string) error {
 		s.lock.Lock()
 		defer s.lock.Unlock()
 		delete(s.data, topic)
+		s.tracker.delete(topic)
 	}
 	return nil
 }

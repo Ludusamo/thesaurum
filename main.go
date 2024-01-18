@@ -39,17 +39,12 @@ func main() {
 	}
 
 	router := httprouter.New()
-	router.GET("/", Index)
 	router.GET("/topic/", HandleList)
 	router.GET("/topic/:topic", HandleGet)
 	router.POST("/topic/:topic", HandlePost)
 	router.DELETE("/topic/:topic", HandleDelete)
 
 	log.Fatal(http.ListenAndServe(":5000", router))
-}
-
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprint(w, "Home")
 }
 
 func HandleDelete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

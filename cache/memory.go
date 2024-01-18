@@ -36,11 +36,11 @@ func (s *InMemoryStore) get(topic string) (*Data, bool) {
 	return d, found
 }
 
-func (s *InMemoryStore) Store(topic string, data *Data) bool {
+func (s *InMemoryStore) Store(topic string, data *Data) error {
 	fmt.Println("storing in memory")
 	if data.Meta.Size > s.maxCached {
 		// Skip caching since we would just wipe and still not be able to fit it
-		return true
+		return nil
 	}
 	s.put(topic, data)
 	s.sizeCached += data.Meta.Size
@@ -54,7 +54,7 @@ func (s *InMemoryStore) Store(topic string, data *Data) bool {
 		}
 	}
 	s.tracker.use(topic)
-	return true
+	return nil
 }
 
 func (s *InMemoryStore) Retrieve(topic string) (*Data, bool) {
@@ -64,7 +64,7 @@ func (s *InMemoryStore) Retrieve(topic string) (*Data, bool) {
 	return data, found
 }
 
-func (s *InMemoryStore) Delete(topic string) bool {
+func (s *InMemoryStore) Delete(topic string) error {
 	data, found := s.get(topic)
 	if found {
 		s.sizeCached -= data.Meta.Size
@@ -72,7 +72,7 @@ func (s *InMemoryStore) Delete(topic string) bool {
 		defer s.lock.Unlock()
 		delete(s.data, topic)
 	}
-	return true
+	return nil
 }
 
 func (s *InMemoryStore) List() []string {

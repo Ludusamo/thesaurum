@@ -55,13 +55,13 @@ func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	topic := p.ByName("topic")
 	b, _ := io.ReadAll(r.Body)
 	data := cache.Data{cache.Metadata{len(b), r.Header.Get("Content-Type")}, b}
-	stored := chainCache.Store(topic, &data)
-	if stored {
+	err := chainCache.Store(topic, &data)
+	if err == nil {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "success")
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "failed to persist to all caches")
+		fmt.Fprint(w, err)
 	}
 }
 

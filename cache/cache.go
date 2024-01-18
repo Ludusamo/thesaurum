@@ -1,5 +1,7 @@
 package cache
 
+import "errors"
+
 type Metadata struct {
 	Size     int
 	Datatype string // MIME Type
@@ -11,9 +13,9 @@ type Data struct {
 }
 
 type Store interface {
-	Store(topic string, data *Data) bool
+	Store(topic string, data *Data) error
 	Retrieve(topic string) (*Data, bool)
-	Delete(topic string) bool
+	Delete(topic string) error
 	List() []string
 }
 
@@ -26,12 +28,12 @@ func (cache *Cache) Add(store Store) *Cache {
 	return cache
 }
 
-func (cache *Cache) Store(topic string, data *Data) bool {
-	succeeded := true
+func (cache *Cache) Store(topic string, data *Data) error {
+	var err error
 	for _, store := range cache.layers {
-		succeeded = succeeded && store.Store(topic, data)
+		err = errors.Join(err, store.Store(topic, data))
 	}
-	return succeeded
+	return err
 }
 
 func (cache *Cache) Retrieve(topic string) (*Data, bool) {
@@ -47,12 +49,12 @@ func (cache *Cache) Retrieve(topic string) (*Data, bool) {
 	return nil, false
 }
 
-func (cache *Cache) Delete(topic string) bool {
-	succeeded := true
+func (cache *Cache) Delete(topic string) error {
+	var err error
 	for _, store := range cache.layers {
-		succeeded = succeeded && store.Delete(topic)
+		err = errors.Join(err, store.Delete(topic))
 	}
-	return succeeded
+	return err
 }
 
 func (cache *Cache) List() [][]string {

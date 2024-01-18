@@ -21,17 +21,17 @@ func NewFileStore(path string) *FileStore {
 	return &s
 }
 
-func (s *FileStore) Store(topic string, data *Data) bool {
+func (s *FileStore) Store(topic string, data *Data) error {
 	fmt.Println("storing in file")
 	fout, err := os.Create(s.getTopicPath(topic))
 	if err != nil {
 		fmt.Println(err)
-		return false
+		return err
 	}
 	defer fout.Close()
 	fmt.Fprintf(fout, "%d\n%s\n", data.Meta.Size, data.Meta.Datatype)
 	fout.Write(data.Data)
-	return true
+	return nil
 }
 
 func (s *FileStore) Retrieve(topic string) (*Data, bool) {
@@ -58,9 +58,9 @@ func (s *FileStore) Retrieve(topic string) (*Data, bool) {
 	return &Data{Metadata{fileLen, dataType}, data}, true
 }
 
-func (s *FileStore) Delete(topic string) bool {
+func (s *FileStore) Delete(topic string) error {
 	err := os.Remove(s.getTopicPath(topic))
-	return err == nil
+	return err
 }
 
 func (s *FileStore) List() []string {

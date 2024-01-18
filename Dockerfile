@@ -6,10 +6,8 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
-COPY *.go ./
+COPY **/*.go ./
 
 RUN go build -o /thesaurum
-
-ENV DATA_FILEPATH=/data
 
 CMD [ "/thesaurum" ]

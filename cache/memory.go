@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"fmt"
+	"log"
 	"sync"
 )
 
@@ -37,7 +37,7 @@ func (s *InMemoryStore) get(topic string) (*Data, bool) {
 }
 
 func (s *InMemoryStore) Store(topic string, data *Data) error {
-	fmt.Println("storing in memory")
+	log.Println("storing in memory")
 	if data.Meta.Size > s.maxCached {
 		// Skip caching since we would just wipe and still not be able to fit it
 		return nil
@@ -45,11 +45,11 @@ func (s *InMemoryStore) Store(topic string, data *Data) error {
 	s.put(topic, data)
 	s.sizeCached += data.Meta.Size
 	for s.sizeCached > s.maxCached {
-		fmt.Printf("%d is > %d maxCached\n", s.sizeCached, s.maxCached)
+		log.Printf("%d is > %d maxCached\n", s.sizeCached, s.maxCached)
 		node := s.tracker.pop()
 		lru, found := s.get(node.topic)
 		if found {
-			fmt.Printf("deleting %s from memory for %d\n", node.topic, lru.Meta.Size)
+			log.Printf("deleting %s from memory for %d\n", node.topic, lru.Meta.Size)
 			s.Delete(node.topic)
 		}
 	}
@@ -58,7 +58,7 @@ func (s *InMemoryStore) Store(topic string, data *Data) error {
 }
 
 func (s *InMemoryStore) Retrieve(topic string) (*Data, bool) {
-	fmt.Println("retrieving in memory")
+	log.Println("retrieving in memory")
 	data, found := s.get(topic)
 	if found {
 		s.tracker.use(topic)

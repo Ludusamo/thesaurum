@@ -1,7 +1,8 @@
 package cache
 
 import (
-	"fmt"
+	"log"
+	"strings"
 	"sync"
 )
 
@@ -18,35 +19,39 @@ type lruTracker struct {
 	lock   *sync.Mutex
 }
 
-func (n *lruNode) print() {
-	fmt.Printf("%s", n.topic)
+func (n *lruNode) constructString(sb *strings.Builder) {
+	sb.WriteString(n.topic)
 	if n.next != nil {
-		fmt.Print(" -> ")
-		n.next.print()
+		sb.WriteString(" -> ")
+		n.next.constructString(sb)
 	}
 }
 
-func (n *lruNode) printReverse() {
-	fmt.Printf("%s", n.topic)
+func (n *lruNode) constructStringRev(sb *strings.Builder) {
+	sb.WriteString(n.topic)
 	if n.prev != nil {
-		fmt.Print(" -> ")
-		n.prev.printReverse()
+		sb.WriteString(" -> ")
+		n.prev.constructStringRev(sb)
 	}
 }
 
 func (tracker *lruTracker) print() {
+	var sb strings.Builder
 	if tracker.head != nil {
-		fmt.Print("Forward: (")
-		tracker.head.print()
-		fmt.Print(")\n")
+		sb.WriteString("Forward: (")
+		tracker.head.constructString(&sb)
+		sb.WriteString(")\n")
+		log.Print(sb.String())
 	}
 }
 
 func (tracker *lruTracker) printReverse() {
+	var sb strings.Builder
 	if tracker.tail != nil {
-		fmt.Print("Reverse: (")
-		tracker.tail.printReverse()
-		fmt.Print(")\n")
+		sb.WriteString("Reverse: (")
+		tracker.tail.constructStringRev(&sb)
+		sb.WriteString(")\n")
+		log.Print(sb.String())
 	}
 }
 
@@ -122,7 +127,7 @@ func (tracker *lruTracker) use(topic string) {
 func (tracker *lruTracker) pop() *lruNode {
 	tracker.lock.Lock()
 	defer tracker.lock.Unlock()
-	fmt.Println("popping least recently used")
+	log.Println("popping least recently used")
 	tracker.print()
 	if tracker.tail != nil {
 		lru := tracker.remove(tracker.tail.topic)

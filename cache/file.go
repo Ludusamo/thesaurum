@@ -3,6 +3,7 @@ package cache
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 )
@@ -22,10 +23,10 @@ func NewFileStore(path string) *FileStore {
 }
 
 func (s *FileStore) Store(topic string, data *Data) error {
-	fmt.Println("storing in file")
+	log.Println("storing in file")
 	fout, err := os.Create(s.getTopicPath(topic))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return err
 	}
 	defer fout.Close()
@@ -35,7 +36,7 @@ func (s *FileStore) Store(topic string, data *Data) error {
 }
 
 func (s *FileStore) Retrieve(topic string) (*Data, bool) {
-	fmt.Println("retrieving from file")
+	log.Println("retrieving from file")
 	fin, err := os.Open(s.getTopicPath(topic))
 	if err != nil {
 		return nil, false
@@ -66,14 +67,14 @@ func (s *FileStore) Delete(topic string) error {
 func (s *FileStore) List() []string {
 	files, err := os.Open(s.path)
 	if err != nil {
-		fmt.Println("error opening directory:", err)
+		log.Println("error opening directory:", err)
 		return nil
 	}
 	defer files.Close()
 
 	fileInfos, err := files.ReadDir(-1)
 	if err != nil {
-		fmt.Println("error reading directory:", err)
+		log.Println("error reading directory:", err)
 		return nil
 	}
 

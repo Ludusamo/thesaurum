@@ -60,7 +60,9 @@ func (s *InMemoryStore) Store(topic string, data *Data) error {
 func (s *InMemoryStore) Retrieve(topic string) (*Data, bool) {
 	fmt.Println("retrieving in memory")
 	data, found := s.get(topic)
-	s.tracker.use(topic)
+	if found {
+		s.tracker.use(topic)
+	}
 	return data, found
 }
 

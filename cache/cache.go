@@ -13,10 +13,10 @@ type Data struct {
 }
 
 type CacheLayer interface {
-	Store(topic string, data *Data) error
-	Retrieve(topic string) (*Data, bool)
-	Delete(topic string) error
-	List() []string
+	store(topic string, data *Data) error
+	retrieve(topic string) (*Data, bool)
+	delete(topic string) error
+	list() []string
 }
 
 type Cache struct {
@@ -30,18 +30,18 @@ func (cache *Cache) Add(store CacheLayer) *Cache {
 
 func (cache *Cache) Store(topic string, data *Data) error {
 	var err error
-	for _, store := range cache.layers {
-		err = errors.Join(err, store.Store(topic, data))
+	for _, layer := range cache.layers {
+		err = errors.Join(err, layer.store(topic, data))
 	}
 	return err
 }
 
 func (cache *Cache) Retrieve(topic string) (*Data, bool) {
-	for layer, store := range cache.layers {
-		data, found := store.Retrieve(topic)
+	for layerNum, layer := range cache.layers {
+		data, found := layer.retrieve(topic)
 		if found {
-			for i := 0; i < layer; i++ {
-				cache.layers[i].Store(topic, data)
+			for i := 0; i < layerNum; i++ {
+				cache.layers[i].store(topic, data)
 			}
 			return data, found
 		}
@@ -51,16 +51,16 @@ func (cache *Cache) Retrieve(topic string) (*Data, bool) {
 
 func (cache *Cache) Delete(topic string) error {
 	var err error
-	for _, store := range cache.layers {
-		err = errors.Join(err, store.Delete(topic))
+	for _, layer := range cache.layers {
+		err = errors.Join(err, layer.delete(topic))
 	}
 	return err
 }
 
 func (cache *Cache) List() [][]string {
 	var lst [][]string
-	for _, store := range cache.layers {
-		lst = append(lst, store.List())
+	for _, layer := range cache.layers {
+		lst = append(lst, layer.list())
 	}
 	return lst
 }

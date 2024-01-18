@@ -36,7 +36,7 @@ func (s *InMemoryCache) get(topic string) (*Data, bool) {
 	return d, found
 }
 
-func (s *InMemoryCache) Store(topic string, data *Data) error {
+func (s *InMemoryCache) store(topic string, data *Data) error {
 	log.Println("storing in memory")
 	if data.Meta.Size > s.maxCached {
 		// Skip caching since we would just wipe and still not be able to fit it
@@ -50,14 +50,14 @@ func (s *InMemoryCache) Store(topic string, data *Data) error {
 		lru, found := s.get(node.topic)
 		if found {
 			log.Printf("deleting %s from memory for %d\n", node.topic, lru.Meta.Size)
-			s.Delete(node.topic)
+			s.delete(node.topic)
 		}
 	}
 	s.tracker.use(topic)
 	return nil
 }
 
-func (s *InMemoryCache) Retrieve(topic string) (*Data, bool) {
+func (s *InMemoryCache) retrieve(topic string) (*Data, bool) {
 	log.Println("retrieving in memory")
 	data, found := s.get(topic)
 	if found {
@@ -66,7 +66,7 @@ func (s *InMemoryCache) Retrieve(topic string) (*Data, bool) {
 	return data, found
 }
 
-func (s *InMemoryCache) Delete(topic string) error {
+func (s *InMemoryCache) delete(topic string) error {
 	data, found := s.get(topic)
 	if found {
 		s.sizeCached -= data.Meta.Size
@@ -78,7 +78,7 @@ func (s *InMemoryCache) Delete(topic string) error {
 	return nil
 }
 
-func (s *InMemoryCache) List() []string {
+func (s *InMemoryCache) list() []string {
 	topics := make([]string, len(s.data))
 	i := 0
 	s.lock.RLock()

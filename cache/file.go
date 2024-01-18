@@ -22,7 +22,7 @@ func NewFileCache(path string) *FileCache {
 	return &s
 }
 
-func (s *FileCache) Store(topic string, data *Data) error {
+func (s *FileCache) store(topic string, data *Data) error {
 	log.Println("storing in file")
 	fout, err := os.Create(s.getTopicPath(topic))
 	if err != nil {
@@ -35,7 +35,7 @@ func (s *FileCache) Store(topic string, data *Data) error {
 	return nil
 }
 
-func (s *FileCache) Retrieve(topic string) (*Data, bool) {
+func (s *FileCache) retrieve(topic string) (*Data, bool) {
 	log.Println("retrieving from file")
 	fin, err := os.Open(s.getTopicPath(topic))
 	if err != nil {
@@ -59,12 +59,12 @@ func (s *FileCache) Retrieve(topic string) (*Data, bool) {
 	return &Data{Metadata{fileLen, dataType}, data}, true
 }
 
-func (s *FileCache) Delete(topic string) error {
+func (s *FileCache) delete(topic string) error {
 	err := os.Remove(s.getTopicPath(topic))
 	return err
 }
 
-func (s *FileCache) List() []string {
+func (s *FileCache) list() []string {
 	files, err := os.Open(s.path)
 	if err != nil {
 		log.Println("error opening directory:", err)

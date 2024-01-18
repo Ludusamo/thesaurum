@@ -1,3 +1,9 @@
+// Cache package implements a chained caching structure.
+//
+// The data that is stored in these caches are a uniform data struct with
+// an arbitrary chunk of bytes tied with some additional metadata.
+// Utility functions are exposed for propagating and storing this data across
+// a chain of different cache layers.
 package cache
 
 import "errors"

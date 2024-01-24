@@ -12,7 +12,7 @@ function notify(text, status) {
 }
 
 async function getTopics() {
-  const res = await fetch(getBaseUrl() + "/topic")
+  const res = await fetch(getBaseUrl() + "/topic/")
   const topics = await res.json()
   const topicSet = new Set()
   for (const layer of topics) {

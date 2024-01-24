@@ -1,3 +1,7 @@
+function getBaseUrl() {
+  return window.location.pathname.replace(/\/editor.*/i, "")
+}
+
 function notify(text, status) {
   UIkit.notification(
     { message: text
@@ -8,7 +12,7 @@ function notify(text, status) {
 }
 
 async function getTopics() {
-  const res = await fetch("/topic")
+  const res = await fetch(getBaseUrl() + "/topic")
   const topics = await res.json()
   const topicSet = new Set()
   for (const layer of topics) {
@@ -38,7 +42,7 @@ async function onSelect() {
   const select = document.getElementById("topic-select")
   const topic = document.getElementById("topic")
   topic.value = select.value
-  const dataRes = await fetch("/topic/" + select.value)
+  const dataRes = await fetch(getBaseUrl() + "/topic/" + select.value)
   const mimetype = dataRes.headers.get("content-type")
   document.getElementById("mimetype").value = mimetype
   let data = await dataRes.text()
@@ -64,7 +68,7 @@ async function publish() {
     notify("Cannot publish with no topic", "danger")
     return
   }
-  const res = await fetch("/topic/" + topic,
+  const res = await fetch(getBaseUrl() + "/topic/" + topic,
     { headers:
       { "Content-Type": mimetype
       }

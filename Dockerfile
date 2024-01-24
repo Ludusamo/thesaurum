@@ -6,7 +6,9 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
-COPY **/*.go ./
+COPY *.go ./
+COPY cache/*.go ./cache/
+COPY static/* ./static/
 
 RUN go build -o /thesaurum
 

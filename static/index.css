@@ -1,0 +1,46 @@
+Content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Montserrat', sans-serif;
+}
+
+Content > * {
+  max-width: 75rem;
+  width: 100%;
+}
+
+hr {
+  display: block;
+  margin-before: 0.5em;
+  margin-after: 0.5em;
+  margin-start: auto;
+  margin-end: auto;
+  overflow: hidden;
+  border 1px inset;
+  opacity: 60%;
+  color: black;
+}
+
+HeaderTitle {
+  font-size: 2rem;
+  font-family: 'Roboto', sans-serif;
+}
+
+BrandLeft {
+  color: #FF7F2E;
+}
+
+BrandRight {
+  color: #3FC3BF;
+}
+
+Footer {
+  color: grey;
+  font-size: 0.7rem;
+}
+
+label {
+  display: flex;
+  flex-direction: row;
+}

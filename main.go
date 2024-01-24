@@ -43,8 +43,13 @@ func main() {
 	router.GET("/topic/:topic", HandleGet)
 	router.POST("/topic/:topic", HandlePost)
 	router.DELETE("/topic/:topic", HandleDelete)
+	router.ServeFiles("/editor/*filepath", http.Dir("static"))
 
-	log.Fatal(http.ListenAndServe(":5000", router))
+	port, err := strconv.Atoi(getEnv("PORT", "5000"))
+	if err != nil {
+		log.Fatal("error parsing PORT: ", err)
+	}
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 
 func HandleDelete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

@@ -7,7 +7,7 @@ Content {
 
 Content > * {
   max-width: 75rem;
-  width: 100%;
+  width: 80%;
 }
 
 hr {
@@ -43,4 +43,9 @@ Footer {
 label {
   display: flex;
   flex-direction: row;
+}
+
+#image-preview {
+  max-width: 512px;
+  max-height: 512px;
 }

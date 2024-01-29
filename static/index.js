@@ -1,5 +1,20 @@
+const editableMimetypes = new Set(
+  [ "application/json"
+  , "text/plain"
+  ])
+
+const imageMimetypes = new Set(
+  [ "image/jpeg"
+  , "image/png"
+  , "image/svg+xml"
+  ])
+
 function getBaseUrl() {
   return window.location.pathname.replace(/\/editor.*/i, "")
+}
+
+function getTopicUrl(topic) {
+  return getBaseUrl() + "/topic/" + topic
 }
 
 function notify(text, status) {
@@ -42,14 +57,25 @@ async function onSelect() {
   const select = document.getElementById("topic-select")
   const topic = document.getElementById("topic")
   topic.value = select.value
-  const dataRes = await fetch(getBaseUrl() + "/topic/" + select.value)
+  const url = getTopicUrl(select.value)
+  const dataRes = await fetch(url)
   const mimetype = dataRes.headers.get("content-type")
-  document.getElementById("mimetype").value = mimetype
-  let data = await dataRes.text()
-  if (mimetype === "application/json") {
-    data = JSON.stringify(JSON.parse(data), null, "  ")
+  const mimetypeEle = document.getElementById("mimetype")
+  mimetypeEle.value = mimetype
+  mimetypeEle.onchange()
+
+  if (editableMimetypes.has(mimetype)) {
+    let data = await dataRes.text()
+    const dataEle = document.getElementById("data")
+    if (mimetype === "application/json") {
+      data = JSON.stringify(JSON.parse(data), null, "  ")
+    }
+    dataEle.value = data
+  } else if (imageMimetypes.has(mimetype)) {
+    const blob = await dataRes.blob()
+    console.log(blob)
+    setImagePreview(blob)
   }
-  document.getElementById("data").value = data
 }
 
 async function publish() {
@@ -61,6 +87,8 @@ async function publish() {
   }
   if (mimetype === "application/json") {
     data = JSON.stringify(JSON.parse(data), null, 0)
+  } else {
+    data = document.getElementById("file-input").files[0]
   }
   const topic = document.getElementById("topic").value
   console.log(topic.length)
@@ -84,9 +112,68 @@ async function publish() {
   }
 }
 
+async function deleteTopic() {
+  const topic = document.getElementById("topic").value
+  if (topic.length == 0) {
+    notify("Cannot delete with no topic", "danger")
+    return
+  }
+  const url = getTopicUrl(topic)
+  const res = await fetch(url, { method: "DELETE" })
+  if (res.status == 200) {
+    await loadTopics()
+    clearFields()
+    notify("Successfully Deleted Topic!", "success")
+  } else {
+    notify("Failed to Delete Topic... " + await res.text(), "danger")
+  }
+}
+
 function clearFields() {
   for (const id of ["topic", "mimetype", "data"]) {
-    document.getElementById(id).value = ""
+    const ele = document.getElementById(id)
+    ele.value = ""
+    if (ele.onchange !== null) {
+      ele.onchange()
+    }
+  }
+}
+
+function hideThesaurumEditControls() {
+  const editControls = document.getElementsByClassName("thesaurum-edit-control")
+  for (const control of editControls) {
+    control.setAttribute("hidden", "hidden")
+  }
+}
+
+function onMimetypeChange() {
+  console.log("on mimetype change")
+  hideThesaurumEditControls()
+  const mimetype = document.getElementById("mimetype").value
+  if (mimetype === "") return;
+  if (editableMimetypes.has(mimetype)) {
+    document.getElementById("data").removeAttribute("hidden")
+  } else {
+    document.getElementById("upload-controls").removeAttribute("hidden")
+    const fileInputEle = document.getElementById("file-input")
+    fileInputEle.setAttribute("accept", mimetype)
+    fileInputEle.value = null
+    if (imageMimetypes.has(mimetype)) {
+      document.getElementById("image-preview").removeAttribute("hidden")
+    }
+  }
+}
+
+function onFileInputChange(e) {
+  setImagePreview(e.target.files[0])
+}
+
+function setImagePreview(src) {
+  const preview = document.getElementById("image-preview")
+  preview.src = URL.createObjectURL(src)
+  preview.onload = function() {
+    URL.revokeObjectURL(preview.src)
+    notify("Loaded Image!", "success")
   }
 }
 
@@ -96,7 +183,23 @@ function setup() {
     ele.innerHTML = new Date().getFullYear()
   }
   document.getElementById("publish").onclick = publish
+  document.getElementById("delete").onclick = deleteTopic
+  const mimetypeEle = document.getElementById("mimetype")
+  for (const type of editableMimetypes) {
+    const option = document.createElement("option")
+    option.value = type
+    option.innerHTML = type
+    mimetypeEle.appendChild(option)
+  }
+  for (const type of imageMimetypes) {
+    const option = document.createElement("option")
+    option.value = type
+    option.innerHTML = type
+    mimetypeEle.appendChild(option)
+  }
+
   clearFields()
+  hideThesaurumEditControls()
 }
 
 setup()

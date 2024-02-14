@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"thesaurum/cache"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 var chainCache cache.Cache
@@ -38,12 +36,12 @@ func main() {
 		}
 	}
 
-	router := httprouter.New()
-	router.GET("/topic/", HandleList)
-	router.GET("/topic/:topic", HandleGet)
-	router.POST("/topic/:topic", HandlePost)
-	router.DELETE("/topic/:topic", HandleDelete)
-	router.ServeFiles("/editor/*filepath", http.Dir("static"))
+	router := http.NewServeMux()
+	router.HandleFunc("GET /topic/", HandleList)
+	router.HandleFunc("GET /topic/{topic}", HandleGet)
+	router.HandleFunc("POST /topic/{topic}", HandlePost)
+	router.HandleFunc("DELETE /topic/{topic}", HandleDelete)
+	router.Handle("/editor/", http.StripPrefix("/editor/", http.FileServer(http.Dir("static"))))
 
 	port, err := strconv.Atoi(getEnv("PORT", "5000"))
 	if err != nil {
@@ -52,8 +50,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 
-func HandleDelete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	topic := p.ByName("topic")
+func HandleDelete(w http.ResponseWriter, r *http.Request) {
+	topic := r.PathValue("topic")
 	err := chainCache.Delete(topic)
 	if err == nil {
 		w.WriteHeader(http.StatusOK)
@@ -64,8 +62,8 @@ func HandleDelete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	topic := p.ByName("topic")
+func HandlePost(w http.ResponseWriter, r *http.Request) {
+	topic := r.PathValue("topic")
 	b, _ := io.ReadAll(r.Body)
 	data := cache.Data{cache.Metadata{len(b), r.Header.Get("Content-Type")}, b}
 	err := chainCache.Store(topic, &data)
@@ -78,8 +76,8 @@ func HandlePost(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	topic := p.ByName("topic")
+func HandleGet(w http.ResponseWriter, r *http.Request) {
+	topic := r.PathValue("topic")
 	data, found := chainCache.Retrieve(topic)
 	if found {
 		w.Header().Set("Content-Type", data.Meta.Datatype)
@@ -91,7 +89,7 @@ func HandleGet(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-func HandleList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func HandleList(w http.ResponseWriter, r *http.Request) {
 	topics := chainCache.List()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

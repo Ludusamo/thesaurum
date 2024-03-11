@@ -34,6 +34,10 @@ Default: 1MB (1024 * 1024 bytes)
 
 Default: `./data`
 
+`CORS_LIST`: List of CORS Allowed Domains
+
+Default: None/Empty String
+
 ## Local Testing
 
 ### Build

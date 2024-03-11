@@ -13,6 +13,7 @@ import (
 )
 
 var chainCache cache.Cache
+var corsList string
 
 func getEnv(env string, def string) string {
 	if v, ok := os.LookupEnv(env); ok {
@@ -22,6 +23,7 @@ func getEnv(env string, def string) string {
 }
 
 func main() {
+	corsList = getEnv("CORS_LIST", "")
 	cacheLayers := strings.Split(getEnv("CACHE_LAYERS", "InMemory,File"), ",")
 	for _, layer := range cacheLayers {
 		if layer == "InMemory" {
@@ -50,7 +52,14 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
 }
 
+func enableCors(w *http.ResponseWriter) {
+	if corsList != "" {
+		(*w).Header().Set("Access-Control-Allow-Origin", corsList)
+	}
+}
+
 func HandleDelete(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	topic := r.PathValue("topic")
 	err := chainCache.Delete(topic)
 	if err == nil {
@@ -63,9 +72,16 @@ func HandleDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlePost(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	topic := r.PathValue("topic")
 	b, _ := io.ReadAll(r.Body)
-	data := cache.Data{cache.Metadata{len(b), r.Header.Get("Content-Type")}, b}
+	data := cache.Data{
+		Meta: cache.Metadata{
+			Size: len(b),
+			Datatype: r.Header.Get("Content-Type"),
+		},
+		Data: b,
+	}
 	err := chainCache.Store(topic, &data)
 	if err == nil {
 		w.WriteHeader(http.StatusOK)
@@ -77,6 +93,7 @@ func HandlePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleGet(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	topic := r.PathValue("topic")
 	data, found := chainCache.Retrieve(topic)
 	if found {
@@ -90,6 +107,7 @@ func HandleGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleList(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	topics := chainCache.List()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
